@@ -1,0 +1,6 @@
+defaultEnvironment: aistro
+environments:
+  aistro:
+    azd:
+      environmentName: aistro
+      service: aistro-agent

@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+infra:
+    provider: microsoft.foundry
+name: aistro-agent
+services:
+    aistro-agent:
+        container:
+            resources:
+                cpu: "2.0"
+                memory: 4Gi
+        description: Date-driven astronomical scenes using NASA/JPL, Astropy and Babylon.js.
+        docker:
+            imagePassthrough: true
+            remoteBuild: false
+        host: azure.ai.agent
+        image: ${AISTRO_AGENT_IMAGE}
+        kind: hosted
+        language: docker
+        name: aistro-agent
+        project: .
+        environmentVariables:
+            - name: PROJECT_ENDPOINT
+              value: ${AZURE_AI_PROJECT_ENDPOINT}
+            - name: MODEL_DEPLOYMENT_NAME
+              value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+            - name: ARTIFACT_STORAGE
+              value: blob
+            - name: AZURE_STORAGE_ACCOUNT_NAME
+              value: ${AZURE_STORAGE_ACCOUNT_NAME}
+            - name: AZURE_STORAGE_CONTAINER_NAME
+              value: aistro
+            - name: ENABLE_ACTIVITY
+              value: "true"
+            - name: TEAMS_WIDGET_ASSET_BASE_URL
+              value: ${TEAMS_WIDGET_ASSET_BASE_URL}
+        protocols:
+            - protocol: responses
+              version: 2.0.0
+            - protocol: activity
+              version: 2.0.0
+        uses:
+            - ai-project
+    ai-project:
+        endpoint: ${AZURE_AI_PROJECT_ENDPOINT}
+        host: azure.ai.project

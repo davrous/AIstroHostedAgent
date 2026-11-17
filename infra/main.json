@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageName": { "type": "string", "minLength": 3, "maxLength": 24 },
+    "siteName": { "type": "string" },
+    "location": { "type": "string", "defaultValue": "northcentralus" },
+    "siteLocation": { "type": "string", "defaultValue": "eastus2" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('storageName')]",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": { "name": "Standard_LRS" },
+      "tags": { "application": "aistro", "component": "artifacts" },
+      "properties": {
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": false,
+        "defaultToOAuthAuthentication": true,
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[concat(parameters('storageName'), '/default/aistro')]",
+      "dependsOn": ["[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]"],
+      "properties": { "publicAccess": "None" }
+    },
+    {
+      "type": "Microsoft.Web/staticSites",
+      "apiVersion": "2023-12-01",
+      "name": "[parameters('siteName')]",
+      "location": "[parameters('siteLocation')]",
+      "sku": { "name": "Free", "tier": "Free" },
+      "tags": { "application": "aistro", "component": "teams-widget" },
+      "properties": {}
+    }
+  ],
+  "outputs": {
+    "storageAccountName": { "type": "string", "value": "[parameters('storageName')]" },
+    "storageResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]"
+    },
+    "widgetSiteName": { "type": "string", "value": "[parameters('siteName')]" },
+    "widgetSiteResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Web/staticSites', parameters('siteName'))]"
+    },
+    "widgetBaseUrl": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.Web/staticSites', parameters('siteName')), '2023-12-01').defaultHostname, '/teams-widget/v1')]"
+    }
+  }
+}

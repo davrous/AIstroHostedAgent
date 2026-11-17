@@ -1,12 +1,16 @@
-.env
+.env*
+**/.env*
 .venv
 .aistro
 .git
 .azure
+.foundry
+infra
 node_modules
 **/node_modules
 **/dist
 __pycache__
+**/__pycache__
 .pytest_cache
 .ruff_cache
 *.png

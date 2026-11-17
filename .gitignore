@@ -2,6 +2,8 @@
 .venv/
 .aistro/
 .azure/
+infra/provisioned.json
+infra/deployment-verification.json
 __pycache__/
 .pytest_cache/
 .ruff_cache/
