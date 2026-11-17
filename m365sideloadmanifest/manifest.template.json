@@ -1,0 +1,45 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/vdevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "__APP_ID__",
+  "developer": {
+    "name": "__DEVELOPER_NAME__",
+    "websiteUrl": "__WEBSITE_URL__",
+    "privacyUrl": "__PRIVACY_URL__",
+    "termsOfUseUrl": "__TERMS_URL__"
+  },
+  "name": {
+    "short": "AIstro",
+    "full": "AIstro - Explorateur astronomique 3D"
+  },
+  "description": {
+    "short": "Explorez le zodiaque en 3D a la date de votre choix avec NASA/JPL.",
+    "full": "Demandez une date a AIstro et explorez une sphere celeste interactive calculee avec NASA/JPL Horizons et Astropy. Comparez les signes tropicaux et les constellations astronomiques, dont Ophiuchus. Une date sans heure utilise 12:00 UTC. Les mouvements de camera ne changent pas la date du calcul. Les distances et les tailles ne sont pas a l'echelle. Les demandes et les rendus sont traites par Microsoft Foundry et les services configures ; les rendus peuvent etre conserves dans Azure Blob Storage. Les widgets HTML necessitent un client et un tenant Teams compatibles. Envoyez /clear pour effacer l'historique conversationnel et invalider les widgets."
+  },
+  "icons": { "color": "color.png", "outline": "outline.png" },
+  "accentColor": "#09162B",
+  "validDomains": ["__ASSET_HOST__", "__STORAGE_HOST__"],
+  "bots": [{
+    "botId": "__BOT_ID__",
+    "scopes": ["personal", "team", "groupChat", "copilot"],
+    "isNotificationOnly": false,
+    "commandLists": [{
+      "scopes": ["personal", "team", "groupChat", "copilot"],
+      "commands": [
+        { "title": "Le ciel aujourd'hui", "description": "Calculer le zodiaque du jour a midi UTC.", "type": "prompt", "prompt": "Montre le zodiaque d'aujourd'hui." },
+        { "title": "Choisir une date", "description": "Explorer une date precise.", "type": "prompt", "prompt": "Je voudrais explorer une date precise. Demande-moi laquelle." }
+      ]
+    }]
+  }],
+  "supportsChannelFeatures": "tier1",
+  "copilotAgents": {
+    "customEngineAgents": [{
+      "id": "__BOT_ID__",
+      "type": "bot",
+      "disclaimer": {
+        "text": "Representation astronomique simplifiee, non a l'echelle. Les reponses generees par IA peuvent contenir des erreurs. Les rendus sont stockes dans les services Azure configures."
+      }
+    }]
+  }
+}

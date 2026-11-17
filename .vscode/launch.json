@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "AIstro: agent et Inspector",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "127.0.0.1", "port": 5679 },
+      "preLaunchTask": "AIstro: ouvrir Agent Inspector"
+    }
+  ]
+}

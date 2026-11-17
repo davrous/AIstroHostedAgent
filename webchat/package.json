@@ -1,0 +1,14 @@
+{
+  "name": "aistro-webchat",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["client", "server"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail \"npm --workspace server run dev\" \"npm --workspace client run dev\"",
+    "build": "npm --workspace server run build && npm --workspace client run build",
+    "start": "npm --workspace server start",
+    "test": "tsx --test server/src/*.test.ts client/src/api/*.test.ts"
+  },
+  "devDependencies": { "concurrently": "^9.0.1", "tsx": "^4.19.2" }
+}

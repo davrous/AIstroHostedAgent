@@ -1,0 +1,31 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: transparent; color: #242424; }
+.aistro-widget { background: #fff; border: 1px solid #d1d1d1; border-radius: 12px; overflow: hidden; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; gap: 12px; }
+h1 { margin: 0; font-size: 15px; }
+header p { font-size: 11px; margin: 5px 0 0; }
+.viewport { height: 360px; position: relative; background: #09162b; }
+canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+#placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #b6cadf; padding: 20px; font-size: 13px; pointer-events: none; }
+#placeholder[hidden] { display: none; }
+#solar { padding: 12px 16px 0; font-size: 12px; line-height: 1.7; }
+.layers { display: flex; gap: 14px; flex-wrap: wrap; padding: 12px 16px; font-size: 12px; }
+.layers label { display: flex; align-items: center; gap: 4px; }
+.controls { display: flex; gap: 8px; padding: 0 16px; flex-wrap: wrap; }
+button, select { font: inherit; font-size: 11px; cursor: pointer; border: 1px solid #adadad; border-radius: 5px; background: #fafafa; color: #242424; padding: 7px 10px; }
+button:disabled, select:disabled { opacity: .5; cursor: default; }
+button:focus-visible, canvas:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid #6264a7; outline-offset: 2px; }
+#status, #error { font-size: 12px; margin: 12px 16px; line-height: 1.6; }
+#error { color: #a4262c; }
+footer { font-size: 10px; line-height: 1.7; padding: 0 16px 14px; opacity: .85; }
+footer details { margin-top: 8px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 9px; }
+a { color: #4b53bc; }
+[data-theme=dark] { background: #1f1f1f; color: #f0f0f0; border-color: #555; }
+[data-theme=dark] button, [data-theme=dark] select { background: #303030; color: #fff; border-color: #777; }
+[data-theme=dark] #error { color: #ffb1b1; }
+[data-theme=dark] a { color: #b8c2ff; }
+[data-theme=high-contrast] { background: Canvas; color: CanvasText; border-color: CanvasText; }
+[data-display-mode=fullscreen] .viewport { height: calc(100dvh - 260px); min-height: 300px; }
+@media (max-width: 430px) { .viewport { height: 290px; } .controls { gap: 6px; } }

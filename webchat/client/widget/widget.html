@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIstro · zodiaque 3D</title>
+  <link rel="stylesheet" href="__ASSET_BASE__/widget.css" crossorigin="anonymous">
+</head>
+<body>
+  <main id="root" class="aistro-widget" aria-label="Vue astronomique AIstro">
+    <header><div><h1>AIstro · zodiaque 3D</h1><p id="instant">NASA/JPL · Astropy · Babylon.js</p></div>
+      <button id="fullscreen" type="button" disabled>Agrandir</button></header>
+    <div class="viewport">
+      <canvas id="sky" tabindex="0" aria-label="Sphère céleste : glisser ou utiliser les flèches pour tourner, molette et touches plus ou moins pour zoomer"></canvas>
+      <div id="placeholder">Explorez le ciel à la date demandée.</div>
+    </div>
+    <div id="solar"></div>
+    <div class="layers">
+      <label><input id="stars" type="checkbox" checked> Constellations</label>
+      <label><input id="signs" type="checkbox" checked> Signes</label>
+      <label><input id="boundaries" type="checkbox" checked> Frontières UAI</label>
+    </div>
+    <div class="controls">
+      <button id="load" type="button">Charger la vue 3D</button>
+      <button id="reset" type="button" disabled>Recentrer</button>
+      <select id="focus" aria-label="Orienter vers une constellation" disabled>
+        <option value="">Vue d'ensemble</option>
+      </select>
+      <button id="ping" type="button">Tester la connexion</button>
+    </div>
+    <p id="status" role="status">Connexion à Teams…</p>
+    <p id="error" role="alert" hidden></p>
+    <footer>Vue géocentrique d'un instant précis ; tailles et distances non à l'échelle.
+      La caméra ne modifie pas la date. Les signes tropicaux sont distincts des constellations.
+      <a id="source" target="_blank" rel="noopener noreferrer" hidden>Source NASA/JPL</a>
+      <a href="__ASSET_BASE__/viewer-licenses.txt" target="_blank" rel="noopener noreferrer">Licences du viewer</a>
+      <details><summary>Données stellaires et licence</summary>
+        <p>Catalogue D3-Celestial / Hipparcos. Coordonnées transformées par Astropy :
+          précession, nutation et aberration ; mouvement propre et parallaxe non modélisés.</p>
+        <pre id="license"></pre>
+      </details>
+    </footer>
+  </main>
+  <script id="aistro-widget-config" type="application/json">__CONFIG__</script>
+  <script src="__ASSET_BASE__/widget.js" crossorigin="anonymous" defer></script>
+</body>
+</html>

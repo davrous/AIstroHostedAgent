@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zodiaque tropical — Babylon.js</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #09162b; color: #edf3fc; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; min-height: 100vh; }
+    #view { position: sticky; top: 0; height: 100vh; min-height: 600px; }
+    canvas { width: 100%; height: 100%; position: absolute; touch-action: none; }
+    header { position: absolute; top: 24px; left: 28px; right: 28px; pointer-events: none; }
+    h1 { font-size: clamp(20px, 3vw, 32px); margin: 0 0 10px; }
+    .eyebrow { color: #72dce4; text-transform: uppercase; letter-spacing: .16em; font-size: 12px; }
+    #stamp { color: #adbdce; }
+    aside { padding: 28px 24px; background: #0e2037; border-left: 1px solid #29435e; }
+    h2 { font-size: 16px; margin-top: 26px; }
+    #solar { color: #ffd366; line-height: 1.8; }
+    .layers label { display: block; margin: 10px 0; font-size: 14px; }
+    select { width: 100%; padding: 10px; background: #203e5e; color: white;
+      border: 1px solid #5d83a5; border-radius: 6px; margin: 8px 0; }
+    .stellar { color: #b2efff; }
+    details { font-size: 12px; margin-top: 20px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
+    #signs { padding: 0; list-style: none; font-size: 14px; }
+    #signs li { padding: 7px 8px; border-left: 3px solid var(--sector); margin: 5px 0; }
+    #signs small { display: block; color: #adbdce; margin-top: 3px; }
+    #signs .active { background: #26354b; outline: 1px solid #ffd366; }
+    p { font-size: 13px; line-height: 1.6; }
+    a { color: #72dce4; overflow-wrap: anywhere; }
+    button { padding: 10px 14px; background: #203e5e; color: white; border: 1px solid #5d83a5;
+      border-radius: 6px; cursor: pointer; }
+    button:focus-visible, canvas:focus-visible { outline: 2px solid #ffd366; }
+    #status { position: absolute; bottom: 24px; left: 28px; right: 28px; color: #ffd366; }
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+      #view { position: relative; height: 70vh; min-height: 400px; }
+      aside { border-left: 0; border-top: 1px solid #29435e; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section id="view" aria-label="Sphère céleste interactive">
+    <canvas id="sky" tabindex="0" aria-label="Vue 3D : rotation avec la souris ou les flèches, zoom avec la molette"></canvas>
+    <header>
+      <p class="eyebrow">NASA / JPL Horizons · Babylon.js</p>
+      <h1>Zodiaque tropical</h1>
+      <div id="stamp"></div>
+    </header>
+    <p id="status" role="status">Chargement du moteur 3D…</p>
+  </section>
+  <aside>
+    <h2>Soleil géocentrique</h2>
+    <div id="solar"></div>
+    <h2>Constellations astronomiques</h2>
+    <p class="stellar">✦ Étoiles blanches · liaisons bleu clair<br>
+      13 figures stellaires, dont Ophiuchus.</p>
+    <div class="layers">
+      <label><input id="show-constellations" type="checkbox" checked> Étoiles et constellations</label>
+      <label><input id="show-signs" type="checkbox" checked> Secteurs et noms des signes tropicaux</label>
+      <label><input id="show-boundaries" type="checkbox" checked> Frontières UAI autour du Soleil</label>
+    </div>
+    <p id="boundary-legend"></p>
+    <p>Une étoile proche du Soleil peut appartenir au Scorpion sans que le Soleil soit
+      dans cette constellation. Seules les frontières UAI déterminent l'appartenance.</p>
+    <label for="focus-constellation">Orienter vers une constellation</label>
+    <select id="focus-constellation"><option value="">Vue d'ensemble</option></select>
+    <p>Les figures relient de vraies étoiles ; leurs formes sont conventionnelles,
+      sans représenter les frontières officielles de l'UAI.
+      Elles ne coïncident pas avec les secteurs de 30° des signes.</p>
+    <h2>12 signes · secteurs de 30°</h2>
+    <ul id="signs"></ul>
+    <button id="reset" type="button">Réinitialiser la vue</button>
+    <p>Glissez pour tourner, utilisez la molette ou pincez pour zoomer.
+      Au clavier : flèches pour tourner, + / − pour zoomer.</p>
+    <p>Les arcs colorés suivent l'écliptique (β = 0°). Les méridiens
+      délimitent les signes sur toute la sphère, à partir de l'équinoxe de mars.</p>
+    <p>Signes tropicaux conventionnels, pas constellations astronomiques.
+      Dates indicatives : les transitions varient selon l'année et le fuseau.</p>
+    <p>Vue extérieure centrée sur la Terre. Soleil projeté sur la sphère ;
+      tailles et distances non à l'échelle. Terre schématique, sans orientation géographique.</p>
+    <p><a id="source" target="_blank" rel="noopener">Requête NASA/JPL utilisée</a><br>
+      Quantité 31 : longitude et latitude apparentes écliptiques de date.</p>
+    <details>
+      <summary>Données stellaires et licence</summary>
+      <p><a id="catalogue-source" target="_blank" rel="noopener">D3-Celestial · Olaf Frohn</a> :
+        étoiles Hipparcos et tracés conventionnels. Positions ICRS/J2000 converties avec Astropy
+        en coordonnées apparentes écliptiques de date (précession, nutation, aberration).
+        Mouvement propre et parallaxe stellaires non modélisés.
+        La taille des étoiles indique leur magnitude, sans échelle physique.
+        Frontières UAI : polygones du même catalogue, échantillonnés tous les 0,5° au plus
+        en coordonnées équatoriales B1875 avant conversion dans le repère de date.
+        Les figures au dos de la sphère sont atténuées ; tournez pour les observer.</p>
+      <pre id="catalogue-license"></pre>
+    </details>
+  </aside>
+</main>
+<script id="zodiac-data" type="application/json">__ZODIAC_DATA__</script>
+<script>
+  "use strict";
+  const data = JSON.parse(document.getElementById("zodiac-data").textContent);
+  const status = document.getElementById("status");
+  const signIndex = Math.floor(((data.longitude % 360) + 360) % 360 / 30);
+  document.getElementById("stamp").textContent = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long", timeStyle: "long", timeZone: "UTC"
+  }).format(new Date(data.instant));
+  document.getElementById("solar").textContent =
+    `${data.signs[signIndex][0]} · ${(data.longitude % 30).toFixed(4)}° dans le signe`;
+  const coordinates = document.createElement("div");
+  coordinates.textContent =
+    `λ = ${data.longitude.toFixed(7)}° · β = ${data.latitude.toFixed(7)}°`;
+  document.getElementById("solar").append(coordinates);
+  const region = document.createElement("div");
+  region.textContent = `Constellation UAI : ${data.solarConstellation}`;
+  document.getElementById("solar").append(region);
+  document.getElementById("source").href = data.requestUrl;
+  document.getElementById("catalogue-source").href = data.catalogueSource;
+  document.getElementById("catalogue-license").textContent = data.catalogueLicense;
+  const solarConstellationIndex = data.constellations.findIndex(
+    item => item.name === data.solarConstellation
+  );
+  const boundaryColors = ["#ffad95", "#72f5d0", "#cbb5ff"];
+  const boundaryConstellations = solarConstellationIndex < 0 ? [] : [-1, 0, 1].map(offset =>
+    data.constellations[(solarConstellationIndex + offset + data.constellations.length)
+      % data.constellations.length]
+  );
+  boundaryConstellations.forEach((constellation, index) => {
+    const entry = document.createElement("span");
+    entry.style.color = boundaryColors[index];
+    entry.textContent = `${index ? " · " : ""}${constellation.name}`;
+    document.getElementById("boundary-legend").append(entry);
+  });
+  data.constellations.forEach(constellation => {
+    const option = document.createElement("option");
+    option.value = constellation.id;
+    option.textContent = `${constellation.name} (${constellation.stars.length} étoiles)`;
+    document.getElementById("focus-constellation").append(option);
+  });
+  data.signs.forEach(([name, dates], index) => {
+    const item = document.createElement("li");
+    item.style.setProperty("--sector", data.colors[index]);
+    item.textContent = `${index + 1}. ${name} · ${index * 30}°–${(index + 1) * 30}°`;
+    const caption = document.createElement("small");
+    caption.textContent = dates;
+    item.append(caption);
+    if (index === signIndex) item.classList.add("active");
+    document.getElementById("signs").append(item);
+  });
+
+  function startScene() {
+    const B = BABYLON;
+    const canvas = document.getElementById("sky");
+    if (!B.Engine.isSupported()) throw new Error("WebGL n'est pas disponible dans ce navigateur.");
+    const engine = new B.Engine(canvas, true);
+    const scene = new B.Scene(engine);
+    scene.useRightHandedSystem = true;
+    scene.clearColor = B.Color4.FromHexString("#09162bff");
+    const radians = degrees => degrees * Math.PI / 180;
+    function vector(longitude, latitude, radius = 1) {
+      const lon = radians(longitude), lat = radians(latitude);
+      return new B.Vector3(
+        radius * Math.cos(lat) * Math.cos(lon),
+        radius * Math.sin(lat),
+        -radius * Math.cos(lat) * Math.sin(lon)
+      );
+    }
+    const initialAlpha = radians(-data.azimuth);
+    const initialBeta = Math.min(Math.PI - .05, Math.max(.05, radians(90 - data.elevation)));
+    const camera = new B.ArcRotateCamera(
+      "camera", initialAlpha, initialBeta, 3.4, B.Vector3.Zero(), scene
+    );
+    camera.lowerRadiusLimit = 1.7;
+    camera.upperRadiusLimit = 7;
+    camera.wheelPrecision = 45;
+    camera.pinchPrecision = 80;
+    camera.attachControl(canvas, true);
+    function fittedRadius() {
+      const halfAngle = Math.atan(
+        Math.tan(camera.fov / 2) * Math.min(1, engine.getAspectRatio(camera))
+      );
+      return Math.max(3.8, 1.65 / Math.sin(halfAngle));
+    }
+    function reset() {
+      camera.alpha = initialAlpha;
+      camera.beta = initialBeta;
+      camera.upperRadiusLimit = Math.max(7, fittedRadius());
+      camera.radius = fittedRadius();
+      camera.setTarget(B.Vector3.Zero());
+      document.getElementById("focus-constellation").value = "";
+    }
+    reset();
+    document.getElementById("reset").addEventListener("click", reset);
+    canvas.addEventListener("keydown", event => {
+      if (event.key === "+" || event.key === "-") {
+        camera.radius = Math.min(camera.upperRadiusLimit,
+          Math.max(1.7, camera.radius + (event.key === "+" ? -.2 : .2)));
+        event.preventDefault();
+      }
+    });
+    new B.HemisphericLight("ambient", new B.Vector3(0, 1, 0), scene).intensity = .9;
+    function material(name, hex, alpha = 1) {
+      const mat = new B.StandardMaterial(name, scene);
+      mat.diffuseColor = B.Color3.FromHexString(hex);
+      mat.emissiveColor = mat.diffuseColor.scale(.35);
+      mat.alpha = alpha;
+      mat.backFaceCulling = false;
+      return mat;
+    }
+    function line(name, points, hex) {
+      const mesh = B.MeshBuilder.CreateLines(name, { points }, scene);
+      mesh.color = B.Color3.FromHexString(hex);
+      mesh.isPickable = false;
+      return mesh;
+    }
+    function label(name, text, position, hex, width = .48) {
+      const texture = new B.DynamicTexture(`${name}-text`, { width: 512, height: 128 }, scene);
+      texture.hasAlpha = true;
+      // Right-handed billboards expose the reverse face of Babylon's default plane.
+      texture.uScale = -1;
+      texture.uOffset = 1;
+      texture.drawText(text, null, 86, "bold 46px sans-serif", hex, "transparent", true);
+      const plane = B.MeshBuilder.CreatePlane(name, { width, height: width / 4 }, scene);
+      plane.position = position;
+      plane.billboardMode = B.Mesh.BILLBOARDMODE_ALL;
+      plane.isPickable = false;
+      const mat = material(`${name}-material`, "#ffffff");
+      mat.diffuseTexture = texture;
+      mat.opacityTexture = texture;
+      mat.disableLighting = true;
+      mat.emissiveColor = B.Color3.White();
+      plane.material = mat;
+      return plane;
+    }
+    data.signs.forEach(([name], index) => {
+      const start = index * 30, color = data.colors[index];
+      const paths = Array.from({ length: 13 }, (_, lonStep) =>
+        Array.from({ length: 37 }, (_, latStep) => vector(start + lonStep * 2.5, -90 + latStep * 5))
+      );
+      const sector = B.MeshBuilder.CreateRibbon(`sector-${index}`, {
+        pathArray: paths, sideOrientation: B.Mesh.DOUBLESIDE
+      }, scene);
+      sector.material = material(`sector-material-${index}`, color, .065);
+      sector.isPickable = false;
+      line(`meridian-${index}`, paths[0], color);
+      const arc = Array.from({ length: 41 }, (_, step) => vector(start + step * .75, 0));
+      const ring = B.MeshBuilder.CreateTube(`ecliptic-${index}`, {
+        path: arc, radius: .007, tessellation: 8
+      }, scene);
+      ring.material = material(`arc-material-${index}`, color);
+      label(`sign-${index}`, `${name} · signe`, vector(start + 15, -22, 1.08), color, .5);
+    });
+    const signMeshes = scene.meshes.filter(mesh =>
+      /^(sector-\d+|meridian-\d+|ecliptic-\d+|sign-\d+)$/.test(mesh.name)
+    );
+    document.getElementById("show-signs").addEventListener("change", event => {
+      signMeshes.forEach(mesh => mesh.setEnabled(event.target.checked));
+    });
+    const stellarMeshes = [];
+    const boundaryMeshes = [];
+    boundaryConstellations.forEach((constellation, index) => {
+      const direction = vector(constellation.longitude, constellation.latitude);
+      constellation.boundaries.forEach((ring, ringIndex) => {
+        const mesh = line(`iau-boundary-${constellation.id}-${ringIndex}`,
+          ring.map(([longitude, latitude]) => vector(longitude, latitude, 1.018)),
+          boundaryColors[index]);
+        boundaryMeshes.push({ mesh, direction, label: false });
+      });
+    });
+    document.getElementById("show-boundaries").addEventListener("change", event => {
+      boundaryMeshes.forEach(({ mesh }) => mesh.setEnabled(event.target.checked));
+    });
+    const starMaterial = material("star-material", "#e9f9ff");
+    starMaterial.disableLighting = true;
+    starMaterial.emissiveColor = B.Color3.FromHexString("#e9f9ff");
+    const seenStars = new Map();
+    data.constellations.forEach(constellation => {
+      const positions = new Map(constellation.stars.map(star =>
+        [star.hip, vector(star.longitude, star.latitude, 1.012)]
+      ));
+      constellation.stars.forEach(star => {
+        if (seenStars.has(star.hip)) return;
+        const mesh = B.MeshBuilder.CreateSphere(`star-${star.hip}`, {
+          diameter: Math.max(.008, .025 * Math.pow(10, -.09 * star.magnitude)),
+          segments: 8
+        }, scene);
+        mesh.position = positions.get(star.hip);
+        mesh.material = starMaterial;
+        mesh.isPickable = false;
+        seenStars.set(star.hip, mesh);
+        stellarMeshes.push({ mesh, direction: mesh.position.normalizeToNew(), label: false });
+      });
+      const paths = constellation.paths.map(path => {
+        const samples = [];
+        for (let index = 0; index < path.length - 1; index++) {
+          const start = positions.get(path[index]), end = positions.get(path[index + 1]);
+          // Sample the short great-circle arc so links remain on the celestial sphere.
+          for (let step = 0; step < 16; step++) {
+            samples.push(B.Vector3.Lerp(start, end, step / 16).normalize().scale(1.012));
+          }
+        }
+        samples.push(positions.get(path[path.length - 1]));
+        return samples;
+      });
+      const mesh = B.MeshBuilder.CreateLineSystem(`constellation-${constellation.id}`, {
+        lines: paths
+      }, scene);
+      mesh.color = B.Color3.FromHexString("#9be7ff");
+      mesh.isPickable = false;
+      const direction = vector(constellation.longitude, constellation.latitude);
+      stellarMeshes.push({ mesh, direction, label: false });
+      const labelLatitude = Math.max(-85, Math.min(85,
+        constellation.latitude + (constellation.latitude >= 0 ? 5 : -5)));
+      const caption = label(`constellation-label-${constellation.id}`, constellation.name,
+        vector(constellation.longitude, labelLatitude, 1.045), "#b2efff", .42);
+      stellarMeshes.push({ mesh: caption, direction, label: true });
+    });
+    document.getElementById("show-constellations").addEventListener("change", event => {
+      stellarMeshes.forEach(({ mesh }) => mesh.setEnabled(event.target.checked));
+    });
+    document.getElementById("focus-constellation").addEventListener("change", event => {
+      const constellation = data.constellations.find(item => item.id === event.target.value);
+      if (!constellation) { reset(); return; }
+      camera.setPosition(vector(constellation.longitude, constellation.latitude, camera.radius));
+    });
+    scene.onBeforeRenderObservable.add(() => {
+      const cameraDirection = camera.position.normalizeToNew();
+      [...stellarMeshes, ...boundaryMeshes].forEach(({ mesh, direction, label: isLabel }) => {
+        const front = B.Vector3.Dot(cameraDirection, direction) > 0;
+        mesh.visibility = front ? 1 : (isLabel ? 0 : .16);
+      });
+    });
+    [-60, -30, 30, 60].forEach(latitude => {
+      const parallel = line(`parallel-${latitude}`,
+        Array.from({ length: 181 }, (_, step) => vector(step * 2, latitude)), "#adbdce");
+      parallel.alpha = .2;
+    });
+    const earth = B.MeshBuilder.CreateSphere("earth", { diameter: .26, segments: 32 }, scene);
+    earth.material = material("earth-material", "#238bc2");
+    label("earth-label", "TERRE", new B.Vector3(0, .23, 0), "#edf3fc", .3);
+    line("equinox-axis", [B.Vector3.Zero(), vector(0, 0, 1.25)], "#edf3fc");
+    label("equinox-label", "0° · Équinoxe de mars", vector(0, -8, 1.27), "#edf3fc", .65);
+    label("north-label", "Pôle nord écliptique", new B.Vector3(0, 1.15, 0), "#edf3fc", .65);
+    const sunPosition = vector(data.longitude, data.latitude);
+    const sun = B.MeshBuilder.CreateSphere("sun", { diameter: .075, segments: 24 }, scene);
+    sun.position = sunPosition;
+    sun.material = material("sun-material", "#ffd366");
+    sun.material.disableLighting = true;
+    sun.material.emissiveColor = B.Color3.FromHexString("#ffd366");
+    line("solar-direction", [B.Vector3.Zero(), sunPosition], "#ffd366");
+    label("sun-label", `SOLEIL · ${data.solarConstellation}`,
+      vector(data.longitude, data.latitude - 9, 1.08), "#ffd366", .58);
+    engine.runRenderLoop(() => scene.render());
+    window.addEventListener("resize", () => {
+      engine.resize();
+      camera.upperRadiusLimit = Math.max(7, fittedRadius());
+      camera.radius = fittedRadius();
+    });
+    engine.onContextLostObservable.add(() => {
+      status.textContent = "Contexte WebGL perdu. Rechargez la page pour restaurer la vue.";
+    });
+    engine.onContextRestoredObservable.add(() => { status.textContent = ""; });
+    status.textContent = "";
+  }
+  const script = document.createElement("script");
+  script.src = "https://cdn.jsdelivr.net/npm/babylonjs@8.0.0/babylon.js";
+  script.onerror = () => {
+    status.textContent = "Impossible de charger Babylon.js. Vérifiez la connexion Internet et rechargez.";
+  };
+  script.onload = () => {
+    try { startScene(); }
+    catch (error) {
+      console.error(error);
+      status.textContent = `Impossible d'afficher la vue 3D : ${error.message}`;
+    }
+  };
+  document.head.append(script);
+</script>
+</body>
+</html>
